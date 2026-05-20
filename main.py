@@ -1,13 +1,54 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-import json, os
+import json, os, csv
 
 app = FastAPI()
 BASE_DIR = os.path.dirname(__file__)
 
+# Load rich data (fully scraped tours)
+_rich = {}
+_rich_path = os.path.join(BASE_DIR, "tours.json")
+if os.path.exists(_rich_path):
+    for t in json.load(open(_rich_path, encoding="utf-8")):
+        _rich[t["id"]] = t
+
+# Load all tours from CSV into memory at startup
+_all_tours = {}
+_csv_path = os.path.join(BASE_DIR, "japan_tours.csv")
+if os.path.exists(_csv_path):
+    with open(_csv_path, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            _all_tours[row["experience_id"]] = row
+
+def get_tour(exp_id):
+    if exp_id in _rich:
+        return _rich[exp_id]
+    row = _all_tours.get(exp_id)
+    if not row:
+        return None
+    return {
+        "id": exp_id,
+        "title": row.get("title", ""),
+        "overview": "",
+        "highlights": [],
+        "important_info": "",
+        "what_to_bring": "",
+        "meeting_point": "",
+        "venue_address": "",
+        "schedule": "",
+        "cancellation": "",
+        "description": "",
+        "access": "",
+        "how_it_works": "",
+        "image": "",
+        "price": row.get("price_jpy", ""),
+        "location": row.get("location", "Japan"),
+        "url": row.get("url", ""),
+        "affiliate_link": row.get("affiliate_link", ""),
+    }
+
 def load_tours():
-    with open(os.path.join(BASE_DIR, "tours.json"), encoding="utf-8") as f:
-        return json.load(f)
+    return list(_rich.values()) or [get_tour(k) for k in list(_all_tours.keys())[:50]]
 
 def section(title, content):
     if not content or not content.strip():
@@ -141,8 +182,7 @@ main{{max-width:800px;margin:32px auto;padding:0 20px}}</style></head>
 
 @app.get("/tour/{experience_id}", response_class=HTMLResponse)
 async def tour_detail(experience_id: str):
-    tours = load_tours()
-    t = next((x for x in tours if x["id"] == experience_id), None)
+    t = get_tour(experience_id)
     if not t:
         return HTMLResponse("Tour not found", status_code=404)
     return tour_page(t)
