@@ -34,9 +34,9 @@ def tour_page(tour):
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>{title} — Japan Tours</title>
-  <meta name="description" content="{desc[:160]}"/>
+  <meta name="description" content="{desc[:200]}"/>
   <meta property="og:title" content="{title}"/>
-  <meta property="og:description" content="{desc[:160]}"/>
+  <meta property="og:description" content="{desc[:200]}"/>
   {"<meta property='og:image' content='" + img + "'/>" if img else ""}
   <style>
     *{{box-sizing:border-box;margin:0;padding:0}}
