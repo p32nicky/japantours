@@ -87,7 +87,16 @@ def tour_page(t):
       <p class="note">Affiliate link — we may earn a small commission at no extra cost to you.</p>
     </div>"""
 
-    body_sections = (
+    # For CSV-only tours with no scraped content
+    has_content = any([t.get("overview"), t.get("description"), t.get("highlights")])
+    if not has_content:
+        body_sections = (
+            book_box +
+            "<div class='section'><p>This is an authentic experience listed on Rakuten Travel. Click the button above to see full details, availability, and pricing on Rakuten.</p></div>" +
+            book_box
+        )
+    else:
+     body_sections = (
         book_box +
         section("Overview", t.get("overview", "")) +
         hl_html +
@@ -102,7 +111,7 @@ def tour_page(t):
         section("Access", t.get("access", "")) +
         section("How it Works", t.get("how_it_works", "")) +
         book_box
-    )
+     )
 
     desc_meta = t.get("overview", t.get("description", ""))[:200]
 
