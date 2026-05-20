@@ -47,6 +47,7 @@ def tour_page(t):
     </div>"""
 
     body_sections = (
+        book_box +
         section("Overview", t.get("overview", "")) +
         hl_html +
         section("Important Information", t.get("important_info", "")) +
@@ -58,7 +59,8 @@ def tour_page(t):
         section("Cancellation Policy", t.get("cancellation", "")) +
         section("Description", t.get("description", "")) +
         section("Access", t.get("access", "")) +
-        section("How it Works", t.get("how_it_works", ""))
+        section("How it Works", t.get("how_it_works", "")) +
+        book_box
     )
 
     desc_meta = t.get("overview", t.get("description", ""))[:200]
