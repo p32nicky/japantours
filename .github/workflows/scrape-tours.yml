@@ -1,0 +1,37 @@
+name: Scrape Tour Details
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # every 6 hours
+  workflow_dispatch:          # manual trigger too
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300      # 5 hour limit per run
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install playwright requests
+          python -m playwright install chromium
+          python -m playwright install-deps chromium
+
+      - name: Scrape tours
+        run: python scrape_all_tours.py
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: Commit updated tours.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tours.json japan_tours.csv
+          git diff --staged --quiet || git commit -m "Auto-scrape: update tour details [skip ci]"
+          git push
