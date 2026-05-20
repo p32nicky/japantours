@@ -51,11 +51,14 @@ def tour_page(t):
         hl_html +
         section("Important Information", t.get("important_info", "")) +
         book_box +
-        section("Full Description", t.get("description", "")) +
         section("What to Bring", t.get("what_to_bring", "")) +
         section("Meeting Point", t.get("meeting_point", "")) +
+        section("Venue Address", t.get("venue_address", "")) +
+        section("Schedule", t.get("schedule", "")) +
+        section("Cancellation Policy", t.get("cancellation", "")) +
+        section("Description", t.get("description", "")) +
         section("Access", t.get("access", "")) +
-        section("Cancellation Policy", t.get("cancellation", ""))
+        section("How it Works", t.get("how_it_works", ""))
     )
 
     desc_meta = t.get("overview", t.get("description", ""))[:200]
