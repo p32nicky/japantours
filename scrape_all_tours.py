@@ -7,8 +7,9 @@ import asyncio, json, re, csv, os
 from playwright.async_api import async_playwright
 from urllib.parse import quote
 
-CSV_FILE = "japan_tours.csv"
-TOURS_JSON = "japantours-site/tours.json"
+_DIR = os.path.dirname(os.path.abspath(__file__))
+CSV_FILE = os.path.join(_DIR, "japan_tours.csv")
+TOURS_JSON = os.path.join(_DIR, "tours.json")
 AFF = "https://click.linksynergy.com/deeplink?id=EWtL65s2%2ftg&mid=53671&murl={}"
 
 JAPAN_LOCATIONS = [
