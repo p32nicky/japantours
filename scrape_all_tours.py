@@ -131,7 +131,7 @@ async def main():
 
             # Commit to GitHub every 100 tours so progress survives timeout
             if (i + 1) % 100 == 0:
-                os.system('git config user.email "bot@bot.com" && git config user.name "bot" && git add tours.json && git commit -m "Scrape progress [skip ci]" && git push || true')
+                os.system('git config user.email "bot@bot.com" && git config user.name "bot" && git add tours.json && git commit -m "Scrape progress [skip ci]" && git pull --rebase && git push || git push --force || true')
                 print(f"  Committed progress to GitHub")
 
         await browser.close()
