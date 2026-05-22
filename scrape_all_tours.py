@@ -129,6 +129,11 @@ async def main():
                 pct = (done + i + 1) / total * 100
                 print(f"[{done+i+1}/{total}] {pct:.1f}% — saved. Last: {exp_id}")
 
+            # Commit to GitHub every 100 tours so progress survives timeout
+            if (i + 1) % 100 == 0:
+                os.system('git config user.email "bot@bot.com" && git config user.name "bot" && git add tours.json && git commit -m "Scrape progress [skip ci]" && git push || true')
+                print(f"  Committed progress to GitHub")
+
         await browser.close()
 
     save_all(rich)
