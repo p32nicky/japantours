@@ -238,6 +238,7 @@ async def index(q: str = "", cat: str = ""):
 <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+  <meta name="google-site-verification" content="rExqKrlIUHf3C8lAuDKtsLeQVUqIIZ_IaHXKvClNwrQ"/>
   <title>Japan Tours — Best Experiences in Japan</title>
   <style>
     *{{box-sizing:border-box;margin:0;padding:0}}
