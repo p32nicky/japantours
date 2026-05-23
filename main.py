@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 import json, os, csv
 
 app = FastAPI()
@@ -123,6 +123,7 @@ def tour_page(t):
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
   <title>{title} — Japan Tours</title>
   <meta name="description" content="{desc_meta}"/>
   <meta property="og:title" content="{title}"/>
@@ -236,6 +237,7 @@ async def index(q: str = "", cat: str = ""):
 <html lang="en">
 <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
   <title>Japan Tours — Best Experiences in Japan</title>
   <style>
     *{{box-sizing:border-box;margin:0;padding:0}}
@@ -287,6 +289,19 @@ function filter(loc){{
 </script>
 </body></html>"""
 
+
+FAVICON_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" fill="#fff"/>
+  <circle cx="16" cy="16" r="9" fill="#bc002d"/>
+</svg>'''
+
+@app.get("/favicon.svg")
+async def favicon_svg():
+    return Response(content=FAVICON_SVG, media_type="image/svg+xml")
+
+@app.get("/favicon.ico")
+async def favicon_ico():
+    return Response(content=FAVICON_SVG, media_type="image/svg+xml")
 
 @app.get("/tour/{experience_id}", response_class=HTMLResponse)
 async def tour_detail(experience_id: str):
