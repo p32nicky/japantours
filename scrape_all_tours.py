@@ -54,7 +54,7 @@ async def scrape_one(page, exp_id):
     img = ""
     for el in await page.query_selector_all("img"):
         src = await el.get_attribute("src") or ""
-        if src.startswith("http") and not any(x in src for x in ["logo","svg","icon","cookie"]) and any(x in src for x in ["prod-rte-static","cloudfront.net","linktivity.io","rakuten"]):
+        if src.startswith("http") and not any(x in src for x in ["logo","svg","icon","cookie"]) and any(x in src for x in ["prod-rte-static","cloudfront.net","linktivity.io","rakuten","activityjapan.com","imgix","imagedelivery"]):
             img = src
             break
 
