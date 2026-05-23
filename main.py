@@ -48,7 +48,9 @@ def get_tour(exp_id):
     }
 
 def load_tours():
-    return list(_rich.values()) or [get_tour(k) for k in list(_all_tours.keys())[:50]]
+    all_csv = [get_tour(k) for k in list(_all_tours.keys())]
+    rich_ids = set(_rich.keys())
+    return [_rich[t["id"]] if t["id"] in rich_ids else t for t in all_csv]
 
 def section(title, content):
     if not content or not content.strip():
@@ -165,28 +167,87 @@ def tour_page(t):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index():
-    tours = load_tours()
+async def index(q: str = "", cat: str = ""):
+    all_tours = load_tours()
+
+    # Filter
+    filtered = all_tours
+    if q:
+        filtered = [t for t in filtered if q.lower() in t.get("title","").lower() or q.lower() in t.get("location","").lower()]
+    if cat and cat != "All":
+        filtered = [t for t in filtered if t.get("location","") == cat]
+
+    # Build category buttons from all tours
+    bad = {"Japan","Same-Day Booking","Instant Confirmation","","Booking","Confirmation"}
+    all_locs = sorted(set(t.get("location","") for t in all_tours if t.get("location","") not in bad))[:20]
+    cat_buttons = f'<button onclick="filter(\'All\')" class="cat-btn {"active" if not cat else ""}">All</button>'
+    for loc in all_locs:
+        active = "active" if cat == loc else ""
+        cat_buttons += f'<button onclick="filter(\'{loc}\')" class="cat-btn {active}">{loc}</button>'
+
     cards = ""
-    for t in tours:
-        img_html = f'<img src="{t["image"]}" style="width:100%;height:160px;object-fit:cover" alt="{t["title"]}">' if t.get("image") else '<div style="width:100%;height:160px;background:#e8e0d0;display:flex;align-items:center;justify-content:center;font-size:2.5rem">🗾</div>'
-        cards += f"""<a href="/tour/{t['id']}" style="display:block;background:#fff;border-radius:10px;overflow:hidden;margin-bottom:16px;text-decoration:none;color:#222;box-shadow:0 2px 8px rgba(0,0,0,.08)">
-            {img_html}
-            <div style="padding:14px">
-              <strong style="font-size:.95rem;line-height:1.3">{t['title']}</strong>
-              <br><small style="color:#c0392b">{t.get('price','')}</small>
-              <small style="color:#888;margin-left:8px">📍 {t.get('location','Japan')}</small>
-            </div>
-        </a>"""
+    for t in filtered[:300]:
+        img = t.get("image","")
+        img_html = f'<img src="{img}" alt="" loading="lazy">' if img else '<div class="no-img">🗾</div>'
+        loc = t.get("location","Japan")
+        if loc in bad: loc = "Japan"
+        title = t.get("title","").replace('"',"&quot;")
+        cards += f'<a href="/tour/{t["id"]}" class="card" data-loc="{loc}"><div class="card-img">{img_html}</div><div class="card-body"><p class="card-title">{title}</p><p class="card-meta">📍 {loc} · <span class="price">{t.get("price","") or t.get("price_jpy","")}</span></p></div></a>'
+
     return f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Japan Tours — Best Experiences in Japan</title>
-<style>*{{box-sizing:border-box;margin:0;padding:0}}body{{font-family:system-ui,sans-serif;background:#f5f0eb}}
-header{{background:#c0392b;padding:16px 24px;color:#fff;font-weight:700;font-size:1.1rem}}
-main{{max-width:800px;margin:32px auto;padding:0 20px}}</style></head>
-<body><header>🗾 Japan Tours</header><main>
-<h1 style="margin-bottom:24px;font-size:1.6rem">Best Experiences in Japan</h1>
-{cards}</main></body></html>"""
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Japan Tours — Best Experiences in Japan</title>
+  <style>
+    *{{box-sizing:border-box;margin:0;padding:0}}
+    body{{font-family:system-ui,sans-serif;background:#f5f0eb;color:#222}}
+    header{{background:#c0392b;padding:14px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}}
+    header a{{color:#fff;text-decoration:none;font-weight:700;font-size:1.1rem;white-space:nowrap}}
+    .search-wrap{{display:flex;gap:8px;flex:1;max-width:420px}}
+    .search-wrap input{{flex:1;padding:8px 12px;border:none;border-radius:6px;font-size:.9rem}}
+    .search-wrap button{{padding:8px 14px;background:#a93226;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600}}
+    main{{max-width:1200px;margin:0 auto;padding:20px}}
+    .cats{{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}}
+    .cat-btn{{padding:5px 14px;border:2px solid #c0392b;border-radius:20px;background:#fff;color:#c0392b;cursor:pointer;font-size:.82rem;font-weight:600}}
+    .cat-btn:hover,.cat-btn.active{{background:#c0392b;color:#fff}}
+    .count{{color:#888;font-size:.82rem;margin-bottom:12px}}
+    .grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}}
+    .card{{background:#fff;border-radius:10px;overflow:hidden;text-decoration:none;color:#222;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;flex-direction:column;transition:transform .15s}}
+    .card:hover{{transform:translateY(-3px)}}
+    .card-img img{{width:100%;height:150px;object-fit:cover;display:block}}
+    .no-img{{width:100%;height:150px;background:#e8e0d0;display:flex;align-items:center;justify-content:center;font-size:2rem}}
+    .card-body{{padding:10px;flex:1}}
+    .card-title{{font-size:.85rem;font-weight:600;line-height:1.35;margin-bottom:6px}}
+    .card-meta{{font-size:.76rem;color:#888}}
+    .price{{color:#c0392b;font-weight:700}}
+    footer{{text-align:center;padding:20px;font-size:.8rem;color:#888;margin-top:24px}}
+  </style>
+</head>
+<body>
+<header>
+  <a href="/">🗾 Japan Tours</a>
+  <form class="search-wrap" method="get" action="/">
+    <input name="q" placeholder="Search tours..." value="{q}"/>
+    <button type="submit">Search</button>
+  </form>
+</header>
+<main>
+  <div class="cats">{cat_buttons}</div>
+  <p class="count">Showing {min(len(filtered),300)} of {len(filtered)} experiences</p>
+  <div class="grid" id="grid">{cards}</div>
+</main>
+<footer>Japan Tours — Discover the best experiences in Japan</footer>
+<script>
+function filter(loc){{
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.card').forEach(c=>{{
+    c.style.display=(loc==='All'||c.dataset.loc===loc)?'':'none';
+  }});
+}}
+</script>
+</body></html>"""
 
 
 @app.get("/tour/{experience_id}", response_class=HTMLResponse)
