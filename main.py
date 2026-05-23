@@ -166,33 +166,55 @@ def tour_page(t):
 </html>"""
 
 
+CATEGORIES = ["Tokyo","Osaka","Kyoto","Okinawa","Hokkaido","Fukuoka","Hiroshima",
+    "Nara","Yokohama","Kobe","Nagoya","Sapporo","Nagasaki","Kanazawa","Hakone",
+    "Nikko","Kamakura","Gifu","Nagano","Naha"]
+
+def clean_loc(loc):
+    bad = {"Japan","Same-Day Booking","Instant Confirmation","","Booking","Confirmation","Kanagawa Prefecture"}
+    if not loc or loc in bad: return "Japan"
+    # Map prefectures to cities
+    if "Kanagawa" in loc: return "Yokohama"
+    if "Osaka" in loc: return "Osaka"
+    if "Tokyo" in loc: return "Tokyo"
+    if "Kyoto" in loc: return "Kyoto"
+    for c in CATEGORIES:
+        if c.lower() in loc.lower(): return c
+    return "Japan"
+
 @app.get("/", response_class=HTMLResponse)
 async def index(q: str = "", cat: str = ""):
     all_tours = load_tours()
 
-    # Filter
+    # Apply clean location
+    for t in all_tours:
+        t["_loc"] = clean_loc(t.get("location",""))
+
+    # Filter server-side
     filtered = all_tours
     if q:
-        filtered = [t for t in filtered if q.lower() in t.get("title","").lower() or q.lower() in t.get("location","").lower()]
+        filtered = [t for t in filtered if q.lower() in t.get("title","").lower()]
     if cat and cat != "All":
-        filtered = [t for t in filtered if t.get("location","") == cat]
+        filtered = [t for t in filtered if t["_loc"] == cat]
 
-    # Build category buttons from all tours
-    bad = {"Japan","Same-Day Booking","Instant Confirmation","","Booking","Confirmation"}
-    all_locs = sorted(set(t.get("location","") for t in all_tours if t.get("location","") not in bad))[:20]
-    cat_buttons = f'<button onclick="filter(\'All\')" class="cat-btn {"active" if not cat else ""}">All</button>'
-    for loc in all_locs:
+    # Category counts
+    from collections import Counter
+    loc_counts = Counter(t["_loc"] for t in all_tours if t["_loc"] != "Japan")
+    top_cats = [c for c in CATEGORIES if loc_counts.get(c,0) > 0]
+
+    cat_buttons = f'<a href="/" class="cat-btn {"active" if not cat else ""}">All ({len(all_tours)})</a>'
+    for loc in top_cats:
         active = "active" if cat == loc else ""
-        cat_buttons += f'<button onclick="filter(\'{loc}\')" class="cat-btn {active}">{loc}</button>'
+        cat_buttons += f'<a href="/?cat={loc}" class="cat-btn {active}">{loc} ({loc_counts[loc]})</a>'
 
     cards = ""
     for t in filtered[:300]:
         img = t.get("image","")
         img_html = f'<img src="{img}" alt="" loading="lazy">' if img else '<div class="no-img">🗾</div>'
-        loc = t.get("location","Japan")
-        if loc in bad: loc = "Japan"
-        title = t.get("title","").replace('"',"&quot;")
-        cards += f'<a href="/tour/{t["id"]}" class="card" data-loc="{loc}"><div class="card-img">{img_html}</div><div class="card-body"><p class="card-title">{title}</p><p class="card-meta">📍 {loc} · <span class="price">{t.get("price","") or t.get("price_jpy","")}</span></p></div></a>'
+        loc = t["_loc"]
+        title = t.get("title","").replace('"',"&quot;").replace("'","&#39;")
+        price = t.get("price","") or t.get("price_jpy","")
+        cards += f'<a href="/tour/{t["id"]}" class="card"><div class="card-img">{img_html}</div><div class="card-body"><p class="card-title">{title}</p><p class="card-meta">📍 {loc} · <span class="price">{price}</span></p></div></a>'
 
     return f"""<!DOCTYPE html>
 <html lang="en">
