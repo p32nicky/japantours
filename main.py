@@ -78,7 +78,8 @@ def tour_page(t):
     affiliate = t["affiliate_link"]
     highlights = t.get("highlights", [])
 
-    img_html = f'<img src="{img}" alt="{title}" class="hero-img">' if img else ""
+    img = img or get_fallback(clean_loc(location))
+    img_html = f'<img src="{img}" alt="{title}" class="hero-img">'
     hl_html = ""
     if highlights:
         hl_html = "<div class='section'><h2>Highlights</h2><ul>" + "".join(f"<li>{h}</li>" for h in highlights) + "</ul></div>"
@@ -170,6 +171,21 @@ CATEGORIES = ["Tokyo","Osaka","Kyoto","Okinawa","Hokkaido","Fukuoka","Hiroshima"
     "Nara","Yokohama","Kobe","Nagoya","Sapporo","Nagasaki","Kanazawa","Hakone",
     "Nikko","Kamakura","Gifu","Nagano","Naha"]
 
+FALLBACK_IMAGES = {
+    "Tokyo":     "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=70",
+    "Osaka":     "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=400&q=70",
+    "Kyoto":     "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=400&q=70",
+    "Okinawa":   "https://images.unsplash.com/photo-1590736704728-f4730bb30770?w=400&q=70",
+    "Hokkaido":  "https://images.unsplash.com/photo-1578637387939-43c525550085?w=400&q=70",
+    "Hiroshima": "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400&q=70",
+    "Nara":      "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=400&q=70",
+    "Hakone":    "https://images.unsplash.com/photo-1480796927426-f609979314bd?w=400&q=70",
+}
+FALLBACK_DEFAULT = "https://images.unsplash.com/photo-1480796927426-f609979314bd?w=400&q=70"
+
+def get_fallback(loc):
+    return FALLBACK_IMAGES.get(loc, FALLBACK_DEFAULT)
+
 def clean_loc(loc):
     bad = {"Japan","Same-Day Booking","Instant Confirmation","","Booking","Confirmation","Kanagawa Prefecture"}
     if not loc or loc in bad: return "Japan"
@@ -209,8 +225,8 @@ async def index(q: str = "", cat: str = ""):
 
     cards = ""
     for t in filtered[:300]:
-        img = t.get("image","")
-        img_html = f'<img src="{img}" alt="" loading="lazy">' if img else '<div class="no-img">🗾</div>'
+        img = t.get("image","") or get_fallback(t.get("_loc","Japan"))
+        img_html = f'<img src="{img}" alt="" loading="lazy">'
         loc = t["_loc"]
         title = t.get("title","").replace('"',"&quot;").replace("'","&#39;")
         price = t.get("price","") or t.get("price_jpy","")
